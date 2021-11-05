@@ -4,8 +4,10 @@
 
 #include <TFT_eSPI.h>
 #include <GyverEncoder.h>
+#include <I2C_eeprom.h>
 
 #include <utils.h>
+#include <memory.h>
 #include <draw-area.h>
 #include <channel.h>
 
@@ -36,6 +38,8 @@
 #define ADC_CANNEL_A 0x40
 #define ADC_CANNEL_B 0x41
 
+#define EEPROM_ADDRESS 0x50
+
 #define ENCODERS_TIMER_INTERVAL 1000
 
 Encoder encVoltageA(ENC_VOLTAGE_A_CLK, ENC_VOLTAGE_A_DT, ENC_VOLTAGE_A_SW);
@@ -46,28 +50,35 @@ Encoder encCurentB(ENC_CURRENT_B_CLK, ENC_CURRENT_B_DT);
 
 TFT_eSPI display = TFT_eSPI();
 
-Channel channelA(&display);
-Channel channelB(&display);
+Memory memory(EEPROM_ADDRESS);
+
+Channel channelA(&display, &memory);
+Channel channelB(&display, &memory);
 
 void tickEncoders() {
   encVoltageA.tick();
   encCurentA.tick();
+  
   encVoltageB.tick();
   encCurentB.tick();
-}
+};
 
 void setup() {
   display.init();
   display.setRotation(3);
   display.fillScreen(TFT_BLACK);
 
+  memory.begin();
+
   channelA.initEncoders(&encVoltageA, &encCurentA);
+  channelA.setStartMemoryAddress(0);
   channelA.setLabel("A");
   channelA.begin(DAC_CHANNEL_A, ADC_CANNEL_A);
   channelA.calibrate(0.022);
   channelA.draw(0, 0);
 
   channelB.initEncoders(&encVoltageB, &encCurentB);
+  channelB.setStartMemoryAddress(64);
   channelB.setLabel("B");
   channelB.begin(DAC_CHANNEL_B, ADC_CANNEL_B);
   channelB.calibrate(0.021);

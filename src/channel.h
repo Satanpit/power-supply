@@ -12,6 +12,7 @@
 #include <utils.h>
 #include <draw-utils.h>
 #include <draw-area.h>
+#include <memory.h>
 
 #define GFXFF 1
 
@@ -26,10 +27,17 @@
 #define DAC_RESOLUTION 4095.0
 #define DAC_VOLTAGE_REF 4.096
 
+#define EEPROM_VOLTAGE_ADDR 0
+#define EEPROM_CURRENT_ADDR 4
+#define EEPROM_ENABLE_ADDR 8
+#define EEPOROM_ENABLE_TRIGGER 9
+
 class Channel {
 public:
-    Channel(TFT_eSPI *display) {
+    Channel(TFT_eSPI *display, Memory *memory) {
         this->display = display;
+        this->memory = memory;
+
         this->drawer = new DrawUtils(display);
         
         this->digital = new Adafruit_MCP4728();
@@ -67,6 +75,16 @@ public:
         this->digital->begin(dacAddress);
         this->analog->begin(adcAddress);
         this->analog->configure(INA226_AVERAGES_64);
+
+        float voltage = this->memory->getFloat(this->startMemoryAddress + EEPROM_VOLTAGE_ADDR, this->inputVoltage);
+        float current = this->memory->getFloat(this->startMemoryAddress + EEPROM_CURRENT_ADDR, this->inputCurrent);
+        
+        this->writeVoltage(voltage);
+        this->writeCurrent(current);
+    }
+
+    void setStartMemoryAddress(int startMemoryAddress) {
+        this->startMemoryAddress = startMemoryAddress;
     }
 
     void calibrate(float resistance) {
@@ -121,7 +139,7 @@ public:
 
     void writeCurrent(float current) {
         this->inputCurrent = Utils::minMax(current, 0.0, this->maxCurrent);
-        this->digital->setChannelValue(MCP4728_CHANNEL_B, (DAC_RESOLUTION / DAC_VOLTAGE_REF) * this->inputCurrent);
+        this->digital->setChannelValue(MCP4728_CHANNEL_B, (DAC_RESOLUTION / this->maxCurrent) * this->inputCurrent);
     }
 
     void drawOutputData() {
@@ -132,7 +150,7 @@ public:
 
     void drawInputData() {
         this->inputVoltageArea->draw(this->inputVoltage);
-        this->inputCurrentArea->draw(this->inputCurrent);
+        this->inputCurrentArea->draw(this->inputCurrent, 3);
     }
 
     void drawLayout() {
@@ -174,9 +192,6 @@ public:
     void tick() {
         float voltage = this->inputVoltage;
         float current = this->inputCurrent;
-
-        this->encVoltage->tick();
-        this->encCurrent->tick();
 
         if (this->encVoltage->isRight()) {
             voltage += this->voltageStepShort;
@@ -220,6 +235,14 @@ public:
             this->inputCurrentArea->draw(this->inputCurrent);
         }
 
+        if (this->encVoltage->isClick()) {
+            this->memory->setFloat(this->startMemoryAddress + EEPROM_VOLTAGE_ADDR, this->inputVoltage);
+        }
+
+        if (this->encCurrent->isClick()) {
+            this->memory->setFloat(this->startMemoryAddress + EEPROM_CURRENT_ADDR, this->inputCurrent);
+        }
+        
         if (millis() - this->previousReadMillis) {
             this->previousReadMillis = millis();
             this->readAnalogData();
@@ -240,12 +263,15 @@ private:
     DrawArea *outputCurrentArea;
     DrawArea *outputPowerArea;
 
+    Memory *memory;
+
     String label = "1";
 
     int x;
     int y;
 
     int analogReadInterval = 100;
+    int startMemoryAddress = 0;
 
     float maxVoltage = 30.00;
     float maxCurrent = 3.00;
@@ -258,8 +284,8 @@ private:
     float inputVoltage = 0.00;
     float inputCurrent = 0.000;
 
-    float currentStepShort = 0.001;
-    float currentStepLong = 0.02;
+    float currentStepShort = 0.01;
+    float currentStepLong = 0.05;
     float voltageStepShort = 0.1;
     float voltageStepLong = 0.5;
 

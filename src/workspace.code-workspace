@@ -1,0 +1,24 @@
+{
+	"folders": [
+		{
+			"path": "../../../Documents/PlatformIO/Projects/stm-32-serial"
+		},
+		{
+			"name": "stm-32-power-supply",
+			"path": "../../../Documents/PlatformIO/Projects/stm-32-power-supply"
+		},
+		{
+			"name": "power-supply-final",
+			"path": "../../../Documents/PlatformIO/Projects/power-supply-final"
+		},
+		{
+			"name": "power-supply",
+			"path": ".."
+		}
+	],
+	"settings": {
+		"files.associations": {
+			"*.gitattributes": "cpp"
+		}
+	}
+}
