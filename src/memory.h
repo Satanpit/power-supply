@@ -38,4 +38,20 @@ public:
     bool getBool(int address) {
         return this->eeprom->readByte(address);
     }
+
+    template <typename T> void setBlock(int address, T value) {
+        byte *data = (byte*) &value;
+
+        this->eeprom->writeBlock(address, data, sizeof(T));
+    }
+
+    template <typename T> T getBlock(int address) {
+        T value;
+
+        byte *data = (byte*) &value;
+
+        this->eeprom->readBlock(address, data, sizeof(T));
+        
+        return value;
+    }
 };

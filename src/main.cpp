@@ -78,7 +78,7 @@ void setup() {
   channelA.draw(0, 0);
 
   channelB.initEncoders(&encVoltageB, &encCurentB);
-  channelB.setStartMemoryAddress(64);
+  channelB.setStartMemoryAddress(32);
   channelB.setLabel("B");
   channelB.begin(DAC_CHANNEL_B, ADC_CANNEL_B);
   channelB.calibrate(0.021);
