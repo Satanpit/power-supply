@@ -78,7 +78,7 @@ public:
 
         float voltage = this->memory->getFloat(this->startMemoryAddress + EEPROM_VOLTAGE_ADDR, this->inputVoltage);
         float current = this->memory->getFloat(this->startMemoryAddress + EEPROM_CURRENT_ADDR, this->inputCurrent);
-        
+
         this->writeVoltage(voltage);
         this->writeCurrent(current);
     }
@@ -134,12 +134,12 @@ public:
 
     void writeVoltage(float voltage) {
         this->inputVoltage = Utils::minMax(voltage, 0.0, this->maxVoltage);
-        this->digital->setChannelValue(MCP4728_CHANNEL_A, (DAC_RESOLUTION / this->maxVoltage) * this->inputVoltage);
+        this->digital->setChannelValue(MCP4728_CHANNEL_A, (DAC_RESOLUTION / this->maxVoltage) * this->inputVoltage, MCP4728_VREF_INTERNAL, MCP4728_GAIN_2X);
     }
 
     void writeCurrent(float current) {
         this->inputCurrent = Utils::minMax(current, 0.0, this->maxCurrent);
-        this->digital->setChannelValue(MCP4728_CHANNEL_B, (DAC_RESOLUTION / this->maxCurrent) * this->inputCurrent);
+        this->digital->setChannelValue(MCP4728_CHANNEL_B, (DAC_RESOLUTION / this->maxCurrent) * this->inputCurrent, MCP4728_VREF_INTERNAL, MCP4728_GAIN_2X);
     }
 
     void drawOutputData() {
